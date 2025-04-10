@@ -1,0 +1,416 @@
+// Group stage
+
+db.cars.aggregate([
+    {
+        $group:{_id:"$maker"}
+    }
+])
+
+db.cars.aggregate([
+    {$group:{
+        _id:"$maker",
+        TotalSum:{$sum:1}
+    }}
+])
+
+db.cars.aggregate([
+    {$group:{
+        _id:"$maker",
+        AvgPrice:{$avg:"$price"}
+    }}
+])
+
+db.cars.aggregate([
+    {
+        $group:{
+            _id:"$fuel_type",
+            TotalCars:{$sum:1}
+        }
+    }
+])
+
+// Match stage
+
+db.cars.aggregate([
+    {
+        $match:{
+            maker:'Hyundai',
+            "engine.cc":{$gt:1200}
+        }
+    }
+])
+
+db.cars.aggregate([
+    {
+        $match:{
+            maker:'Tata'
+        }
+    },
+    {
+        $count:"Total_cars"
+    }
+])
+
+// Match and Group
+db.cars.aggregate([
+    {
+        $match:{
+            maker:'Hyundai'
+        }
+    },
+    {
+        $group:{
+            _id:"$fuel_type",
+            TotalCars:{$sum:1}
+        }
+    },
+])
+
+// Projects
+db.cars.aggregate([
+    {
+        $match:{
+            maker:"Hyundai"
+        }
+    },
+    {
+        $project:{
+            _id:0,
+            maker:1,
+            model:1,
+            fuel_type:1,
+            price:1
+        }
+    }
+])
+
+
+// Sort
+
+db.cars.aggregate([
+    {
+        $match:{
+            maker:"Hyundai"
+        }
+    },
+    {
+        $project:{
+            _id:0,
+            maker:1,
+            model:1,
+            fuel_type:1,
+            price:1
+        }
+    },
+    {
+        $sort:{model:-1}
+    }
+])
+
+// sort with limit
+db.cars.aggregate([
+    {
+        $match:{
+            maker:"Hyundai"
+        }
+    },
+    {
+        $project:{
+            _id:0,
+            maker:1,
+            model:1,
+            fuel_type:1,
+            price:1
+        }
+    },
+    {
+        $sort:{model:-1}
+    },
+    {
+        $limit:1
+    }
+])
+
+// Sort
+// Group the cars by maker and then sort based on the count(no. of cars)
+db.cars.aggregate([
+    {
+        $group:{
+            _id:"$maker",
+            TotalCount:{$sum:1},
+        }
+    },
+    {
+        $sort:{TotalCount:1}
+    }
+])
+
+// or, SortByCount
+db.cars.aggregate([
+    {$sortByCount:"$maker"}
+])
+
+// Unwind
+db.cars.aggregate([
+    {
+        $unwind:"$owners"
+    },
+    {
+        $project:{
+            _id:0,
+            maker:1,
+            model:1,
+            owners:1,
+            price:1
+        }
+    }
+])
+
+
+// String operator
+db.cars.aggregate([
+    {
+        $project:{
+            _id:0,
+            CarName:{
+                $concat:["$maker"," ","$model"]
+            },
+            price:1
+        }
+    }
+])
+
+// toupper
+db.cars.aggregate([
+    {
+        $match:{
+            maker:"Hyundai"
+        }
+    },
+    {
+        $project:{
+            _id:0,
+            maker:{$toUpper:"$maker"},
+            CarName:{
+                $concat:[
+                {$toUpper:"$maker"},
+                " ",
+                {$toUpper:"$model"}
+            ]
+            }
+        }
+    }
+])
+
+db.cars.aggregate([
+    {
+        $match:{
+            maker:"Hyundai"
+        }
+    },
+    {
+        $project:{
+            _id:0,
+            maker:{$toUpper:"$maker"},
+            CarName:{
+                $toUpper:{
+                    $concat:[
+                        "$maker",
+                        " ",
+                        "$model"                    ]
+
+                }
+            }
+        }
+    }
+])
+
+
+// regex match
+db.cars.aggregate([
+    {
+        $project:{
+            _id:0,
+            model:1,
+            id_diesel:{
+                $regexMatch:{
+                    input:"$fuel_type",
+                    regex:"Dies"
+                }
+            }
+        }
+    }
+])
+
+// out
+db.cars.aggregate([
+    {
+        $match:{
+            maker:"Hyundai"
+        }
+    },
+    {
+        $project:{
+            _id:0,
+            maker:{$toUpper:"$maker"},
+            CarName:{
+                $toUpper:{
+                    $concat:[
+                        "$maker",
+                        " ",
+                        "$model"                    
+                    ]
+                }
+            }
+        }
+    },
+    {
+        $out:"hyundai_cars"
+    }
+])
+
+// Arithematic functions
+db.cars.aggregate([
+    {
+        $project:{
+            _id:0,
+            model:1,
+            maker:1,
+            final_price:{
+                $add:["$price",55000]
+            }
+        }
+    }
+])
+
+// price in lakhs
+db.cars.aggregate([
+    {
+      $project: {
+        _id: 0,
+        model: 1,
+        maker: 1,
+        price: 1
+      }
+    },
+    {
+      $addFields: {
+        price_in_lakhs: {
+          $concat: [
+            {
+              $toString: {
+                $divide: ["$price", 100000]
+              }
+            },
+            " ",
+            "Lakhs"
+          ]
+        }
+      }
+    }
+  ])
+  
+
+// calculate the service cost of each Hyundai car
+db.cars.aggregate([
+    {
+        $match:{
+            maker:"Hyundai"
+        }
+    },
+    {
+        $set:{
+            Total_service_cost:{
+                $sum:["$service_history.cost"]
+            }
+        }
+    },
+    {
+        $project:{
+            _id:0,
+            model:1,
+            maker:1,
+            Total_service_cost:1
+        }
+    }
+])
+
+// suppose we want to check cars fuel type is petrol or not and categorize the cars into petrol car and non petrol
+
+db.cars.aggregate([
+    {
+        $project:{
+            _id:0,
+            maker:1,
+            model:1,
+            fuel_catagory:{
+                $cond:{
+                    if:{$eq:["$fuel_type","Petrol"]},
+                    then:"Petrol car",
+                    else:"Non-Petrol"
+                }
+            }
+        }
+    }
+])
+
+db.cars.aggregate([
+    {
+        $project:{
+            _id:0,
+            model:1,
+            maker:1,
+            fuel_type:{
+                $cond:{
+                    if:{$eq:["$fuel_type","Diesel"]},
+                    then:"Diesel Car",
+                    else:"Not Diesel car"
+                }
+            }
+        }
+    }
+])
+
+
+// switch case
+db.cars.aggregate([
+    {
+      $project: {
+        _id: 0,
+        maker: 1,
+        model: 1,
+        price: 1,
+        car_type: {
+          $switch: {
+            branches: [
+              { case: { $eq: ["$fuel_type", "Petrol"] }, then: "Petrol Car" },
+              { case: { $eq: ["$fuel_type", "Diesel"] }, then: "Diesel Car" },
+              { case: { $eq: ["$fuel_type", "Electric"] }, then: "Electric Car" },
+              { case: { $eq: ["$fuel_type", "CNG"] }, then: "CNG Car" }
+            ],
+            default: "Unknown"
+          }
+        }
+      }
+    }
+  ])
+  
+
+// indexes in mongodb
+db.cars.createIndex({
+    maker:1
+})
+
+db.cars.createIndex({
+    maker:1
+},
+{
+    unique:true
+}
+)
+
+db.cars.getIndexes()
+
+db.cars.dropIndex("maker_1")
+
+db.cars.find({model:"XUV500"}).explain("executionStats")
