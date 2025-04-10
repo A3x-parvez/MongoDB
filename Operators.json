@@ -1,0 +1,85 @@
+// Arithematic operators
+
+db.cars.find({"engine.cc":{$gt:1400}})
+
+db.cars.find({"engine.cc":{$lt:1400}})
+
+db.cars.find({"engine.cc":{$eq:1400}})
+
+db.cars.find({"engine.cc":{$in:[1498,2179]}})
+
+db.cars.find({"engine.cc":{$nin:[1498,2179]}})
+
+// logical operators
+// And operator
+db.cars.find({
+    $and:[
+        {maker:"Maruti Suzuki"},
+        {fuel_type: "Petrol"}
+    ]
+})
+
+db.cars.find({
+    $and:[
+        {maker:"Maruti Suzuki"},
+        {fuel_type: "Petrol"},
+        {airbags:{$eq:2}}
+    ]
+})
+
+// OR operator
+db.cars.find({
+    $or:[
+        {fuel_type: "Petrol"},
+        {"engine.type": "Turbocharged"}
+    ]
+})
+
+// Nor
+db.cars.find({
+    $nor:[
+        {fuel_type: "Petrol"},
+        {"engine.type": "Turbocharged"}
+    ]
+})
+
+// Element operatos
+// exists
+db.cars.find({fuel_type:{$exists:true}})
+
+// Type
+db.cars.find({model:{$type:"string"}})
+
+// Array operatos
+// size method
+db.cars.find({
+    features:{$size:5}
+})
+
+db.cars.find({
+    features:{
+        $all:['Sunroof','Leather Seats',
+        'Wireless Charging']
+    }
+})
+
+db.cars.find({
+    features:{
+        $all:["ABS"]
+    }
+})
+
+
+// Cursor Method
+
+// count
+db.cars.count()
+
+// Sort
+db.cars.find({},{_id:0,maker:1,model:1,price:1}).sort({price:-1})
+
+// Limit
+db.cars.find({},{_id:0,maker:1,model:1,price:1}).sort({price:-1}).limit(1)
+
+// skip
+db.cars.find({},{_id:0,maker:1,model:1,price:1}).sort({price:-1}).skip(3)
